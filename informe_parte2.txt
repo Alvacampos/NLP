@@ -1,0 +1,124 @@
+INFORME - PARTE 2: APLICACIÓN DE PLN SOBRE EL CORPUS ELEGIDO
+
+Materia: Procesamiento de Lenguaje Natural - Licenciatura en Inteligencia Artificial (UBP)
+
+
+1. CORPUS UTILIZADO
+
+Se trabajó con un único documento: la noticia "La NASA confirmó el final de Swift, el telescopio que caerá a la Tierra después de casi 22 años en el espacio", publicada por Infobae en su sección Ciencia el 27 de octubre de 2026 y firmada por Cecilia Castro.
+Enlace: https://www.infobae.com/america/ciencia-america/2026/10/27/la-nasa-confirmo-el-final-de-swift-el-telescopio-que-caera-a-la-tierra-despues-de-casi-22-anos-en-el-espacio/
+
+El texto se obtuvo de la página original y se guardó en el archivo noticia.txt: título en la primera línea, bajada en la segunda y un párrafo por línea a continuación. Se conservaron el título, la bajada y los 22 párrafos del cuerpo (1022 palabras en total). Se excluyeron los cuatro epígrafes de fotografías, porque no forman parte del cuerpo y repiten frases del texto (inflarían las frecuencias), y los dos intertítulos.
+
+Como en la Parte 1 se asignó a la noticia la categoría Tecnología (tecnología espacial), el análisis de esta parte se orientó a validar o refutar con datos las hipótesis formuladas allí: keywords esperadas, bigramas esperados, entidades esperadas con sus posibles errores de reconocimiento y estructura de la noticia.
+
+
+2. CÓDIGO DEL PROCESAMIENTO
+
+Todo el procesamiento está en el script pln_swift.py. Las dependencias figuran en requirements.txt (nltk, spacy, scikit-learn, pandas, matplotlib y wordcloud) y se utilizó además el modelo es_core_news_md de spaCy. Se ejecuta con el comando "python pln_swift.py", que imprime los resultados por consola y guarda las figuras en la carpeta figuras/.
+
+El script está organizado en seis secciones, cada una con sus propias funciones:
+(1) carga y segmentación del corpus;
+(2) preprocesamiento;
+(3) técnicas de análisis: frecuencias, TF-IDF, n-gramas, NER y estructura;
+(4) representación vectorial con BoW y TF-IDF de scikit-learn;
+(5) visualizaciones;
+(6) cuantificación de las limitaciones de la representación.
+
+El pipeline sigue la secuencia estándar descrita en la guía de la materia: recolección del corpus, limpieza, tokenización, normalización, lematización, vectorización y análisis.
+
+
+3. ANÁLISIS REALIZADO
+
+3.a. Decisiones de preprocesamiento
+
+Segmentación por párrafos. Cada párrafo, más el título y la bajada, se trata como un documento independiente, lo que da 24 segmentos. La razón es matemática: con un solo documento, IDF = log(N/df) = log(1/1) = 0 para todos los términos y la ponderación TF-IDF se anula. Al segmentar, el IDF distingue los términos repartidos en toda la noticia de los concentrados en pocos párrafos.
+
+Análisis lingüístico sobre el texto original. spaCy tokeniza y lematiza el texto con mayúsculas y puntuación, porque estas señales orientan el etiquetado gramatical. La normalización (minúsculas y eliminación de puntuación y números) se aplica después, sobre cada lema. Se comprobó que normalizar antes degradaba el resultado: sin la mayúscula inicial, "Prueba" se lematizaba como el verbo "probar".
+
+Limpieza. Se eliminan la puntuación y los números y se conservan las tildes, porque distinguen palabras y el lematizador las necesita.
+
+Stopwords. Se usa la lista de NLTK para español (313 palabras) más los lemas de verbos auxiliares y modales (ser, estar, haber, tener, hacer, poder, deber, ir), que no aportan contenido temático.
+
+Clíticos y guiones. Algunos lemas contienen espacios, porque spaCy separa los pronombres enclíticos ("acercarse" se convierte en "acercar él") y la normalización transforma el guion en espacio ("Domagal-Goldman"). Para que cada token sea una sola palabra, los lemas se dividen en sus partes y el pronombre "él" se descarta como stopword.
+
+Lematización en lugar de stemming. La guía de la materia indica que el stemming corta sufijos mecánicamente y produce raíces que pueden no ser palabras reales, mientras que la lematización devuelve la forma canónica del diccionario. La comparación sobre palabras de la noticia lo confirma: el stemmer de Snowball produce "telescopi", "cientif" o "estall", y el lematizador devuelve "telescopio", "científico" y "estallido". Se prefiere la lematización porque los términos resultantes deben interpretarse como keywords. El lematizador también falla en algunos casos ("reingresará" produce "reingresacer", "observen" produce "observir"), y estos errores se documentan como limitación.
+
+Resultado del preprocesamiento. Las 1022 palabras originales se reducen a 557 tokens, un 45 % menos, con un vocabulario de 356 lemas distintos.
+
+3.b. Técnicas utilizadas
+
+Frecuencia de términos: conteo absoluto de lemas en toda la noticia, el enfoque Bag of Words (BoW).
+
+Extracción de keywords por TF-IDF: implementación propia con la fórmula de la guía, TF(t,d) = f(t,d)/|d| e IDF(t) = log(N/df), con logaritmo natural. La relevancia a nivel noticia se calculó como el TF-IDF medio de cada término sobre los 24 segmentos, y a nivel párrafo se tomaron los tres términos de mayor peso en cada segmento.
+
+N-gramas: bigramas y trigramas de lemas formados dentro de cada segmento, sin cruzar el límite entre párrafos.
+
+Reconocimiento de entidades nombradas (NER): spaCy aplicado sobre el texto original, porque el reconocimiento depende de las mayúsculas. Las etiquetas del modelo son PER (persona), ORG (organización), LOC (lugar) y MISC (otras). Los resultados se evaluaron manualmente.
+
+Estructura computacional: para cada segmento se calcularon la cantidad de palabras y de tokens, la densidad de keywords (proporción de tokens que pertenecen a las keywords esperadas de la Parte 1) y la proporción de vocabulario de Ciencia frente a Tecnología. Para esto último se usaron dos léxicos de dominio definidos a priori, que excluyen los términos ambiguos entre ambos dominios. Telescopio y observatorio se asignaron a Tecnología por tratarse de instrumentos, en coherencia con la categoría elegida en la Parte 1.
+
+Representación vectorial: matrices BoW (CountVectorizer) y TF-IDF (TfidfVectorizer) de scikit-learn, construidas con unigramas y bigramas (ngram_range=(1,2)). Ambas se aplican sobre los tokens ya preprocesados, con funciones identidad como tokenizer y preprocessor y lowercase=False, para no repetir ni alterar el pipeline de spaCy.
+
+Cuantificación de limitaciones: se contaron los números y las negaciones que elimina el preprocesamiento, se comparó la similitud entre sinónimos en one-hot, en BoW y con los embeddings de spaCy (vectores de 300 dimensiones), y se registraron los usos de un término polisémico.
+
+3.c. Resultados obtenidos
+
+Frecuencias. Los cinco lemas más frecuentes son telescopio (13), nasa (12), swift (11), misión (9) y atmósfera (7), y todos estaban entre las keywords esperadas. En total, 10 de los 20 lemas más frecuentes son keywords esperadas. Entre los otros diez aparece ruido semántico como "alto" (7), "año", "hacia" y "casi".
+
+Keywords por TF-IDF. En el ranking a nivel noticia, 10 de los 20 primeros términos son keywords esperadas: swift ocupa el puesto 2, espacial el 3 y telescopio el 5. De las 20 keywords esperadas, 19 aparecen en el texto. La excepción es "reingreso", con frecuencia 0: la noticia usa "reentrada" (frecuencia 4) y el verbo "reingresar". Varias keywords esperadas resultaron marginales: propulsor, supernovas, terabytes y robótico aparecen una sola vez, y órbita y altitud, dos veces. A nivel párrafo, los tres términos principales identifican el subtema de cada segmento; por ejemplo, el párrafo p07 da descartado y falla, y el p10 da clima y espacial. También se observó que el TF-IDF medio favorece a los segmentos cortos: "final", "confirmar" y "caer" quedan en los puestos 6, 7 y 10 solo porque aparecen en el título, que tiene 11 tokens y por lo tanto un TF alto.
+
+N-gramas. El bigrama más frecuente es "rayo gamma" (4) y el trigrama más frecuente, "estallido rayo gamma" (3). De los cinco bigramas esperados, cuatro se validan: "rayo gamma" (4), "resistencia atmosférico" (3), "nave robótico" (1) y "clima espacial" (1). El quinto, "misión espacial", tiene frecuencia 0 y se refuta, porque el texto habla de "misión científica" y "misión inicial". Solo 17 de los 511 bigramas distintos se repiten. Aparecen además adyacencias artificiales, como "casi año" (3), que se forman al eliminar el número de "casi 22 años".
+
+Entidades nombradas. spaCy detectó 53 menciones de 34 entidades distintas: 21 MISC, 14 PER, 13 ORG y 5 LOC. La evaluación manual considera correctas 22 de las 53 menciones (42 %). En el contraste con las hipótesis:
+- Se confirma el error esperado sobre "Neil Gehrels", etiquetado como PER aunque forma parte del nombre de un objeto.
+- Se confirma que "Swift" se etiqueta mal: es PER en 7 de sus 11 menciones, LOC en una y en las otras tres queda incluido dentro de entidades más largas. En ningún caso se reconoce como un objeto.
+- Se refuta el error esperado sobre "LINK" y "GRB 050509B": spaCy detectó ambos correctamente como MISC.
+
+Se encontraron además errores no previstos:
+- "Katalyst Space Technologies" se etiqueta como PER.
+- "Centro de Vuelo Espacial Goddard" se divide en dos entidades.
+- "S. Bradley Cenko" se reconoce sin la inicial.
+- 14 de las 21 entidades MISC son falsos positivos: frases al comienzo de una oración, como "Esa fuerza" o "Según", que el modelo confunde con nombres propios por la mayúscula inicial.
+
+Estructura. La densidad de keywords es 0,27 en el título y la bajada, frente a 0,19 de promedio en los párrafos. Esto valida la hipótesis de que el inicio concentra más señal (patrón de pirámide invertida), aunque los párrafos p04 (0,31) y p05 (0,30) superan ese valor. En el total de la noticia el vocabulario de dominio es 60 % Tecnología (78 tokens) y 40 % Ciencia (53). Ese promedio esconde un cambio de tema muy marcado: entre p01 y p12, donde la noticia trata sobre la operación y la caída del telescopio, el vocabulario de Ciencia es apenas el 8 %. Entre p13 y p22, donde trata sobre la historia y los logros de la misión, sube al 69 %, y supera el 90 % en p17 y p18. Se valida así que los párrafos sobre logros astrofísicos empujan la noticia hacia Ciencia.
+
+Representación vectorial. Las matrices BoW y TF-IDF tienen 24 filas (segmentos) y 867 columnas (356 unigramas y 511 bigramas), con una dispersión del 94,8 %, es decir, de celdas con valor cero. Además, 494 de los 511 bigramas (97 %) aparecen una sola vez. Esto ilustra la dispersión de datos que la guía señala como principal limitación de los n-gramas: incorporar bigramas más que duplica la dimensión de la matriz y casi todas las columnas nuevas tienen frecuencia 1.
+
+Los rankings de BoW y TF-IDF comparten 12 de sus 15 primeros términos, aunque la correlación de Spearman sobre el vocabulario completo es 0,60, porque las diferencias aparecen en los términos de menor peso. TF-IDF sube los términos concentrados en pocos segmentos ("rayo gamma", "rayo", "estudiar") y baja los repartidos ("nave", "científico", "reentrada"). La implementación manual y la de scikit-learn coinciden en 16 de sus 20 primeros unigramas. La diferencia se explica porque scikit-learn usa por defecto un IDF suavizado, ln((1+N)/(1+df)) + 1, y normaliza cada documento con la norma L2.
+
+
+4. VISUALIZACIONES
+
+Las figuras se generan al ejecutar el script y se guardan en la carpeta figuras/.
+
+figuras/01_frecuencias_top20.png: gráfico de barras horizontales con los 20 lemas más frecuentes. Las keywords anticipadas en la Parte 1 aparecen destacadas en otro color, lo que permite ver de un vistazo cuáles se validan (las cinco primeras) y qué términos no previstos aparecen, como "alto", "año" o "reentrada".
+
+figuras/02_nube_tfidf.png: nube de palabras ponderada por el TF-IDF medio, que incluye unigramas y bigramas. El tamaño y la intensidad del color representan la relevancia del término y no solo su repetición. Se destacan swift, telescopio y nasa, junto con los bigramas "rayo gamma" y "resistencia atmosférico", y también se ve ruido como "alto" o "casi año".
+
+figuras/03_heatmap_tfidf.png: mapa de calor con los 24 segmentos en las filas y los 20 términos de mayor TF-IDF en las columnas. Muestra cómo se distribuye la señal a lo largo de la noticia: los términos generales (telescopio, swift, nasa, misión) aparecen en muchos segmentos, mientras que "rayo gamma", "rayo" y "gamma" solo aparecen entre p13 y p18.
+
+figuras/04_ciencia_vs_tecnologia.png: barras apiladas con la cantidad de tokens de cada léxico de dominio en cada segmento. Una línea vertical marca el corte entre p12 y p13, donde la noticia pasa de un vocabulario de Tecnología a uno de Ciencia.
+
+figuras/05_entidades_ner.png: tabla con las entidades detectadas por spaCy, su etiqueta, su frecuencia y la evaluación manual (correcta, tipo erróneo, límites erróneos o falso positivo). Resume que 22 de las 53 menciones son correctas y que los errores principales son "Swift" como PER, "Katalyst Space Technologies" como PER y los falsos positivos MISC al comienzo de las oraciones.
+
+
+5. CONCLUSIONES
+
+La representación construida con BoW y TF-IDF sobre lemas captura bien de qué trata la noticia y en qué parte del texto se desarrolla cada tema. El núcleo temático (swift, telescopio, nasa, misión) se mantiene igual bajo las dos ponderaciones. El TF-IDF por párrafo identifica el subtema de cada segmento, y las métricas de estructura revelan un cambio de tema entre la primera mitad (tecnología: caída, rescate fallido, reentrada) y la segunda (ciencia: rayos gamma, supernovas, estrellas de neutrones). En conjunto, la mayoría de las hipótesis de la Parte 1 se validaron con datos y se refutaron cuatro: la keyword "reingreso", el bigrama "misión espacial" y los errores de NER esperados para "LINK" y "GRB 050509B".
+
+En cambio, la representación no captura qué afirma la noticia sobre esos temas. El análisis permitió cuantificar los aspectos del lenguaje que quedan fuera del modelo:
+
+Negación. 9 de las 10 negaciones del texto se eliminan como stopwords. En la frase "El telescopio no contaba con propulsores", el modelo registra "propulsor" como presente y representa lo contrario de lo que el texto afirma.
+
+Magnitudes numéricas. Se eliminan 21 números, entre ellos los datos centrales de la noticia: 275 km de altura, 22 años de operación, más de 2.000 estallidos de rayos gamma, 1.400 supernovas, 12 terabytes y un estallido de 0,03 segundos. El modelo sabe que la noticia habla de estallidos, pero no de cuántos.
+
+Sinonimia y correferencia. Swift, telescopio, observatorio y satélite se refieren al mismo objeto (33 menciones en total), pero ocupan cuatro dimensiones independientes. En una representación one-hot su similitud es 0. Entre las columnas de BoW, la similitud de coseno solo refleja si los términos aparecen en los mismos segmentos: por ejemplo, "altura" y "altitud" dan 0,00. Con los embeddings de spaCy, la similitud entre ese mismo par sube a 0,67, y la de "telescopio" y "observatorio" es 0,63. Esto confirma lo que plantea la guía de la materia: los vectores dispersos no capturan semántica y los embeddings densos sí la aproximan.
+
+Ambigüedad. "Swift" se etiqueta como persona en 7 de sus 11 menciones. Una explicación posible, que no se verificó, es que el modelo, entrenado con texto periodístico, asocia esa palabra con un apellido (por ejemplo, el de Taylor Swift). Además, el lema "alto" agrupa 7 usos con 6 sentidos distintos (capas, órbita, riesgo, recompensa, temperaturas y definición), y "nave" se refiere tanto a Swift como a LINK.
+
+Orden y contexto. BoW no cambia si se reordenan las palabras. Los bigramas recuperan el orden solo en parte y además introducen adyacencias artificiales. La lematización elimina el tiempo verbal ("caerá" y "cayó" se reducen al mismo lema "caer"), y la representación no conserva quién dice qué: las citas de la NASA y las de Katalyst Space Technologies quedan mezcladas en el mismo vocabulario.
+
+Hubo también limitaciones propias del caso. Con 24 segmentos, todos los términos que aparecen en un solo segmento reciben el mismo IDF, por lo que los tres primeros términos de algunos párrafos empatan exactamente (en p02, por ejemplo, tres términos pesan 0,144). Los léxicos de dominio y la evaluación del NER dependen de decisiones del analista, y los errores del lematizador y del NER se trasladan a todas las etapas posteriores.
+
+Respecto de la categoría asignada en la Parte 1, los datos sostienen la clasificación como Tecnología: 60 % del vocabulario de dominio es tecnológico. Sin embargo, el margen es frágil, porque la segunda mitad de la noticia es predominantemente científica, y el título casi no aporta vocabulario de dominio (un solo token, tecnológico), por lo que tampoco permite desempatar. La frontera entre Ciencia y Tecnología identificada en la Parte 1 queda así confirmada como una fuente real de ambigüedad. Un clasificador basado en BoW o TF-IDF podría asignar cualquiera de las dos categorías según cómo se pondere cada segmento. Para resolver estos problemas harían falta representaciones contextuales, como embeddings densos o modelos Transformer, capaces de considerar el orden, la negación y el contexto que el modelo de bolsa de palabras descarta.
