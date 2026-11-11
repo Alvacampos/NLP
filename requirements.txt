@@ -1,7 +1,9 @@
-nltk
-spacy
-scikit-learn
-pandas
-matplotlib
-wordcloud
-# Modelo de spaCy: python -m spacy download es_core_news_md
+# Probado con Python 3.12
+nltk==3.10.4
+spacy==3.8.18
+scikit-learn==1.9.1
+pandas==3.1.1
+matplotlib==3.11.2
+wordcloud==1.9.6
+# Modelo de spaCy para español (se instala junto con el resto)
+es_core_news_md @ https://github.com/explosion/spacy-models/releases/download/es_core_news_md-3.8.0/es_core_news_md-3.8.0-py3-none-any.whl

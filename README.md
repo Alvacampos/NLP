@@ -8,7 +8,7 @@ Examen de práctica de Procesamiento de Lenguaje Natural (Licenciatura en Inteli
 
 | Archivo | Contenido |
 |---|---|
-| `Procesamiento de Lenguaje Natural - Gonzalo Alvarez Campos.pdf` | Parte 1: selección del corpus, categoría asignada (Tecnología) y análisis semántico con las hipótesis a validar. |
+| `Procesamiento de Lenguaje Natural.pdf` | Parte 1: selección del corpus, categoría asignada (Tecnología) y análisis semántico con las hipótesis a validar. |
 | `pln_swift.py` | Parte 2: script con todo el pipeline (corpus, preprocesamiento, técnicas de análisis y representación vectorial). |
 | `informe_parte2.txt` | Informe de la Parte 2 en texto plano: corpus, código, análisis, visualizaciones y conclusiones. |
 | `noticia.txt` | Texto de la noticia: título, bajada y un párrafo por línea (22 párrafos). |
@@ -23,9 +23,10 @@ Probado con Python 3.12.
 python3.12 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
-python -m spacy download es_core_news_md
 python pln_swift.py
 ```
+
+`requirements.txt` incluye el modelo `es_core_news_md` de spaCy. La primera ejecución necesita conexión a internet: el script descarga la lista de stopwords de NLTK.
 
 La salida se imprime por consola, organizada por secciones, y las figuras se guardan como PNG en `figuras/`.
 
@@ -36,3 +37,10 @@ La salida se imprime por consola, organizada por secciones, y las figuras se gua
 3. **Análisis:** top 20 lemas por frecuencia, keywords por TF-IDF (TF = f(t,d)/|d|, IDF = log(N/df)), bigramas y trigramas, NER sobre el texto original y métricas de estructura por segmento (densidad de keywords y proporción de vocabulario Ciencia/Tecnología).
 4. **Representación:** BoW (`CountVectorizer`) y TF-IDF (`TfidfVectorizer`) con unigramas y bigramas, con su dispersión y la comparación de rankings.
 5. **Visualizaciones:** cinco figuras PNG que resumen los resultados anteriores.
+
+## Uso de herramientas de IA
+
+La Parte 2 se desarrolló con la asistencia de Claude (Anthropic), un asistente de IA.
+
+- **Autor:** eligió la noticia, asignó la categoría y realizó el análisis y las hipótesis de la Parte 1. También definió la consigna, el alcance y el método de trabajo, tomó las decisiones de preprocesamiento, y revisó y aprobó cada paso antes de avanzar al siguiente.
+- **Asistente de IA:** escribió el código de `pln_swift.py`, generó las figuras y redactó `informe_parte2.txt`, siempre bajo la supervisión del autor.
