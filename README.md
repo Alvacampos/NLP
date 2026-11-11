@@ -8,9 +8,10 @@ Examen de práctica de Procesamiento de Lenguaje Natural (Licenciatura en Inteli
 
 | Archivo | Contenido |
 |---|---|
-| `Procesamiento de Lenguaje Natural.pdf` | Parte 1: selección del corpus, categoría asignada (Tecnología) y análisis semántico con las hipótesis a validar. |
+| `Procesamiento de Lenguaje Natural-P1.pdf` | Parte 1: selección del corpus, categoría asignada (Tecnología) y análisis semántico con las hipótesis a validar. |
+| `Procesamiento de Lenguaje Natural-P2.pdf` | Parte 2: informe completo con las figuras incluidas (corpus, código, análisis, visualizaciones y conclusiones). |
 | `pln_swift.py` | Parte 2: script con todo el pipeline (corpus, preprocesamiento, técnicas de análisis y representación vectorial). |
-| `informe_parte2.txt` | Informe de la Parte 2 en texto plano: corpus, código, análisis, visualizaciones y conclusiones. |
+| `informe_parte2.txt` | El mismo informe de la Parte 2 en texto plano, para pegar en la plataforma web. |
 | `noticia.txt` | Texto de la noticia: título, bajada y un párrafo por línea (22 párrafos). |
 | `requirements.txt` | Dependencias de Python. |
 | `figuras/` | Visualizaciones generadas por el script: frecuencias, nube TF-IDF, heatmap TF-IDF, Ciencia vs. Tecnología y tabla de entidades. |
@@ -43,4 +44,4 @@ La salida se imprime por consola, organizada por secciones, y las figuras se gua
 La Parte 2 se desarrolló con la asistencia de Claude (Anthropic), un asistente de IA.
 
 - **Autor:** eligió la noticia, asignó la categoría y realizó el análisis y las hipótesis de la Parte 1. También definió la consigna, el alcance y el método de trabajo, tomó las decisiones de preprocesamiento, y revisó y aprobó cada paso antes de avanzar al siguiente.
-- **Asistente de IA:** escribió el código de `pln_swift.py`, generó las figuras y redactó `informe_parte2.txt`, siempre bajo la supervisión del autor.
+- **Asistente de IA:** escribió el código de `pln_swift.py`, generó las figuras y redactó el informe de la Parte 2 (`informe_parte2.txt` y su versión PDF), siempre bajo la supervisión del autor.
